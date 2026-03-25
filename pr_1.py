@@ -40,10 +40,17 @@ models = list(electric_scooters_detailed.keys())
 name_char = list(electric_scooters_detailed[models[0]].keys())
 char = [list(scooter.values()) for scooter in electric_scooters_detailed.values()]
 
-def get_normal(char):
+def get_normal(char, names):
     normal = []
+    base = char[0]
     for item in char:
-        normal.append([a / b for a, b in zip(item, char[0])])
+        row = []
+        for i in range(len(item)):
+            if names[i] == "Вес (кг)":
+                row.append(base[i] / item[i])
+            else:
+                row.append(item[i] / base[i])
+        normal.append(row)
     return normal
 
 def get_quality(normal):
@@ -56,29 +63,28 @@ def create_bar(name, values):
     plt.bar(name, values)
     plt.xlabel("Модель")
     plt.ylabel("Kту")
-    plt.legend()
     plt.xticks(rotation=15, ha="right", fontsize=8)
     plt.tight_layout()
     plt.show()
 
 def create_radial(models, name, values):
-    for item in values:
-        item += item[:1]
-
+    plot_values = [v + v[:1] for v in values]
     angles = np.linspace(0, 2 * np.pi, len(name), endpoint=False).tolist()
     angles += angles[:1]
     fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(projection="polar"))
 
-    for i in range(len(values)):
-        ax.plot(angles, values[i], "o-", linewidth=2, label=models[i])
+    for i in range(len(plot_values)):
+        ax.plot(angles, plot_values[i], "o-", linewidth=2, label=models[i])
 
     ax.set_xticks(angles[:-1])
     ax.set_xticklabels(name, fontsize=8)
-    ax.set_ylim(0, max([max(v) for v in values]) + 0.2)
+    ax.set_ylim(0, max([max(v) for v in plot_values]) + 0.2)
     ax.legend(loc="upper right", bbox_to_anchor=(1.3, 1.0))
     plt.title("Сравнение относительных характеристик", pad=20)
     plt.show()
 
-data = get_quality(get_normal(char))
+
+normalized_data = get_normal(char, name_char)
+data = get_quality(normalized_data)
 create_bar(models, data)
-create_radial(models, name_char, get_normal(char))
+create_radial(models, name_char, normalized_data)
